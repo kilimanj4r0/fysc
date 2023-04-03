@@ -11,6 +11,7 @@ const CenteredLayout = styled(Layout)`
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--color-background);
 `;
 
 const CenteredPage: React.FC<Props> = ({ children }): JSX.Element => {
