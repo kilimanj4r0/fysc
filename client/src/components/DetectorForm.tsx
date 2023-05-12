@@ -73,7 +73,7 @@ const DetectorForm: React.FC = () => {
   const onFill = () => {
     form.setFieldsValue({
       reference: 'https://face.com',
-      target: 'https://photos.com',
+      input: 'https://photos.com',
     });
   };
 
@@ -97,20 +97,22 @@ const DetectorForm: React.FC = () => {
         <Form.Item name="reference" label="Photos with your face" rules={rules}>
           <Input placeholder="cloud url" />
         </Form.Item>
-        <Form.Item name="target" label="Photos to search" rules={rules}>
+        <Form.Item name="input" label="Photos to search" rules={rules}>
           <Input placeholder="cloud url" />
         </Form.Item>
         <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit" loading={loading}>
+          <Space style={{ width: '100%' }} direction='vertical'>
+            <Button type="primary" htmlType="submit" loading={loading} block>
               {loadingText}
             </Button>
-            <Button htmlType="button" onClick={onFill}>
-              Fill form
-            </Button>
-            <Button htmlType="button" onClick={onClear} type="text">
-              Clear
-            </Button>
+            <Space>
+              <Button htmlType="button" onClick={onFill}>
+                Fill form
+              </Button>
+              <Button htmlType="button" onClick={onClear} type="text">
+                Clear
+              </Button>
+            </Space>
           </Space>
         </Form.Item>
       </Form>
