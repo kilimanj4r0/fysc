@@ -1,7 +1,9 @@
-import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Button, Card, Divider, Form, Input, Space, Typography, message } from 'antd';
-import { useState } from 'react';
+import { Button, Card, Form, Input, Space, Tooltip, Typography, message } from 'antd';
+import { Rule } from 'antd/es/form';
+import Link from 'antd/es/typography/Link';
+import axios from 'axios';
+import { useRef, useState } from 'react';
 
 const { Title, Text } = Typography;
 
@@ -24,70 +26,98 @@ const CardBodyStyle = {
 
 const DetectorForm: React.FC = () => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState('Detect');
-  const [resultShow, setResultShow] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingText, setLoadingText] = useState<string>('Detect');
+  const [filename, setFilename] = useState<string>('photos.zip');
+  const [href, setHref] = useState<string>('');
+  const ref = useRef<HTMLAnchorElement>(null);
 
   const onFinish = () => {
-    message.success('Detection in progress!');
-    // loading timeout
     setLoading(true);
     setLoadingText('Detecting');
-    setTimeout(() => {
-      setLoading(false);
-      setResultShow(true);
-      setLoadingText('Detected');
-    }, 3000);
-  };
-
-  const onFinishFailed = () => {
-    message.error('Detection failed!');
-    setResultShow(false);
+    axios({
+      url: 'http://localhost:8000/detector/find',
+      method: 'GET',
+      responseType: 'blob',
+      params: {
+        target_album_url: form.getFieldValue('target'),
+        reference_album_url: form.getFieldValue('reference'),
+      },
+      timeout: 1000 * 30,
+      headers: {
+        Accept: 'application/octet-stream',
+      },
+      onDownloadProgress: (value) => {
+        if (value.total) {
+          setLoadingText(`Dowloading ${Math.round((value.loaded / value.total) * 100)}%`);
+        } else if (value.download) {
+          setLoadingText('Downloading');
+        }
+        console.log(value);
+      },
+    })
+      .then((response) => {
+        setFilename(response.headers['content-disposition'].split('filename=')[1].replace(/"/g, ''));
+        setHref(URL.createObjectURL(response.data));
+        setTimeout(() => ref.current?.click(), 100);
+        setLoading(false);
+        setLoadingText('Detect');
+      })
+      .catch((error) => {
+        message.error('Detection failed!');
+        setLoading(false);
+        setLoadingText('Detect');
+      });
   };
 
   const onFill = () => {
     form.setFieldsValue({
-      face: 'FACE',
-      photos: 'PHOTOS',
+      reference: 'https://face.com',
+      target: 'https://photos.com',
     });
   };
+
+  const onClear = () => {
+    form.resetFields();
+  };
+
+  const rules: Rule[] = [{ type: 'url' }, { required: true, message: 'Please input a valid url' }];
 
   return (
     <CardWrapper
       title={
         <CardHead>
           <Title>fysc</Title>
-          <Text>Provide links to Cloud (Yandex.Disk) directories</Text>
+          <Text>Find your photos in shared albums</Text>
         </CardHead>
       }
       bodyStyle={CardBodyStyle}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
-        autoComplete="off"
-        requiredMark={false}
-      >
-        <Form.Item name="face" label="Face" rules={[{ type: 'url' }]}>
-          <Input placeholder="cloud directory url" />
+      <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off" requiredMark={true}>
+        <Form.Item name="reference" label="Photos with your face" rules={rules}>
+          <Input placeholder="cloud url" />
         </Form.Item>
-        <Form.Item name="photos" label="Photos" rules={[{ type: 'url' }]}>
-          <Input placeholder="cloud directory url" />
+        <Form.Item name="target" label="Photos to search" rules={rules}>
+          <Input placeholder="cloud url" />
         </Form.Item>
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit" loading={loading}>
               {loadingText}
             </Button>
-            <Button htmlType="button" onClick={onFill} type="text">
+            <Button htmlType="button" onClick={onFill}>
               Fill form
+            </Button>
+            <Button htmlType="button" onClick={onClear} type="text">
+              Clear
             </Button>
           </Space>
         </Form.Item>
       </Form>
-      {resultShow && <Text>Result</Text>}
+      <Link href={href} target="_blank" download={filename} ref={ref} style={{ display: 'none' }}>
+        Download {filename}
+      </Link>
+      <Text type="secondary">Only Yandex.Disk is supported</Text>
     </CardWrapper>
   );
 };
