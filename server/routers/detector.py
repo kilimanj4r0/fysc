@@ -1,12 +1,21 @@
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
+import asyncio
+import aiohttp
+
 import requests
 import hashlib
 import json
 import os
+from typing import List, Dict
 
 import time
+import traceback
+
+
+DATA_DIR_BASE = 'data'
+YANDEX_URL_BASE = 'https://cloud-api.yandex.net/v1/disk/public/resources'
 
 
 router = APIRouter(
@@ -23,50 +32,51 @@ def create_empty_file(filename, size_in_bytes):
         f.write(b'\0')
 
 
+async def download_file(url: str, path: str) -> None:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            data = await response.read()
+            with open(path, 'wb') as f:
+                f.write(data)
+
+
+async def download_files(path: str, files: List[Dict[str, str]]) -> None:
+    tasks = [asyncio.create_task(download_file(file['url'], os.path.join(path, file['filename']))) for file in files]
+    await asyncio.gather(*tasks)
+
+
 @router.get("/find")
 async def find(target_album_url: str=None, reference_album_url: str=None):
-    time.sleep(15)
-    create_empty_file(os.path.join(DATA_DIR_BASE, 'dummy.zip'), 256 * 1024 * 1024)
+    if target_album_url is None:
+        raise HTTPException(status_code=400,
+            detail='Missing target_album_url query parameter')
+    if reference_album_url is None:
+        raise HTTPException(status_code=400,
+            detail='Missing reference_album_url query parameter')
 
-    def file_iterator(file_path, chunk_size=4096):
-        with open(file_path, "rb") as file:
-            while True:
-                chunk = file.read(chunk_size)
-                if not chunk:
-                    break
-                yield chunk
+    target_url_hash = hashlib.md5()
+    target_url_hash.update(target_album_url.encode())
+    reference_url_hash = hashlib.md5()
+    reference_url_hash.update(reference_album_url.encode())
 
-    return StreamingResponse(
-        file_iterator(os.path.join(DATA_DIR_BASE, 'dummy.zip')),
-        media_type='application/zip',
-    )
+    target_dir = os.path.join(DATA_DIR_BASE, target_url_hash.hexdigest())
+    reference_dir = os.path.join(DATA_DIR_BASE, reference_url_hash.hexdigest())
 
-    # if target_album_url is None:
-    #     return 'target is none'
-    # # if reference_album_url is None:
-    # #     return 'reference is none'
-
-    # target_url_hash = hashlib.md5().update(target_album_url)
-    # # reference_url_hash = hashlib.md5().update(reference_album_url)
-
-    # target_dir = os.path.join(DATA_DIR_BASE, target_url_hash.hexdigest())
-    # reference_dir = os.path.join(DATA_DIR_BASE, reference_url_hash.hexdigest())
-
-    # if os.path.isdir(target_dir)
+    if not os.path.isdir(target_dir):
+        os.makdirs(target_dir)
+        target_download_links = get_photos_from_yandex(target_album_url)
+        await download_files(target_dir, target_download_links)
+    if not os.path.isdir(reference_dir):
+        os.makedirs(reference_dir)
+        reference_download_links = get_photos_from_yandex(reference_album_url)
+        await download_files(reference_dir, reference_album_url)
     
-    # try:
-    #     target_download_links = get_from_yandex(target_album_url)
-    # except Exception:
-    #     return traceback.format_exc()
-
-    # return target_download_links
 
 
-DATA_DIR_BASE = ''
-YANDEX_URL_BASE = 'https://cloud-api.yandex.net/v1/disk/public/resources'
+    return 'success'
 
 
-def get_from_yandex(public_key: str):
+def get_photos_from_yandex(public_key: str):
     url = YANDEX_URL_BASE + f'?public_key={public_key}'
     response = requests.get(url)
 
@@ -79,7 +89,7 @@ def get_from_yandex(public_key: str):
         if item['type'] == 'dir':
             pass
         elif item['type'] == 'file' and item['media_type'] == 'image':
-            photo_download_links.append(item['file'])
+            photo_download_links.append({'url': item['file'], 'filename': item['name']})
 
     return photo_download_links
 
