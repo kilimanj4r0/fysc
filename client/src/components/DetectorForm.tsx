@@ -57,7 +57,7 @@ const DetectorForm: React.FC = () => {
       .then((response) => {
         setFilename(response.headers['content-disposition'].split('filename=')[1].replace(/"/g, ''));
         setHref(URL.createObjectURL(response.data));
-        setTimeout(() => ref.current?.click(), 100);
+        setTimeout(() => ref.current?.click(), 200);
         setLoading(false);
         setLoadingText('Detect');
       })
