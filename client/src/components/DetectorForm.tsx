@@ -40,7 +40,7 @@ const DetectorForm: React.FC = () => {
       method: 'GET',
       responseType: 'blob',
       params: {
-        target_album_url: form.getFieldValue('target'),
+        input_album_url: form.getFieldValue('input'),
         reference_album_url: form.getFieldValue('reference'),
       },
       headers: {
@@ -70,8 +70,8 @@ const DetectorForm: React.FC = () => {
 
   const onFill = () => {
     form.setFieldsValue({
-      reference: 'https://face.com',
-      input: 'https://photos.com',
+      reference: 'https://disk.yandex.com/d/ZOsKjMSGj6My2A',
+      input: 'https://disk.yandex.ru/d/4WrRHSdG4gHf_w',
     });
   };
 
