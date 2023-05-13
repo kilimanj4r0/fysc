@@ -43,7 +43,6 @@ const DetectorForm: React.FC = () => {
         target_album_url: form.getFieldValue('target'),
         reference_album_url: form.getFieldValue('reference'),
       },
-      timeout: 1000 * 30,
       headers: {
         Accept: 'application/octet-stream',
       },
@@ -53,7 +52,6 @@ const DetectorForm: React.FC = () => {
         } else if (value.download) {
           setLoadingText('Downloading');
         }
-        console.log(value);
       },
     })
       .then((response) => {
