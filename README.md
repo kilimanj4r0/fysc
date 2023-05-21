@@ -1,6 +1,6 @@
-# fysc - Find YourSelf in Clouds
+# fysc — Find YourSelf in Clouds
 
-**Find your photos in shared albums.** The goal is to provide you simple interface to extract your photos from any shared albums. We based our application on [deepface](https://github.com/serengil/deepface/) library.
+**Find your photos in shared albums.** The goal is to provide simple interface to extract (your) photos from any shared albums. We based our application on [deepface](https://github.com/serengil/deepface/) library.
 
 All you need is:
 - put a link to album with your photos
@@ -10,14 +10,14 @@ All you need is:
 
 ![app](app.png)
 
-## Stack
+## Technology Stack
 
 - [deepface](https://github.com/serengil/deepface/)
 - React TS
 - `fastapi`
 - Docker
 
-## Model comparison
+## Model Comparison
 
 We compared VGG-Face, Facenet512, and SFace on three distance metrics: Cosine similarity, Euclidean, and Euclidean l2.
 
