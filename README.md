@@ -42,7 +42,7 @@ For backend we used recommended setup by deepface, namely:
 
 - YOLOv8
 
-## To get started
+## To Get Started
 
 - Frontend
 
