@@ -41,3 +41,22 @@ For backend we used recommended setup by deepface, namely:
 ## Future Work
 
 - YOLOv8
+
+## To get started
+
+- Frontend
+
+```shell
+cd client
+npm i
+npm start
+```
+  
+- Backend
+
+```shell
+cd server
+pip install -r requirements.txt
+uvicorn --port 8000 main:app
+```
+  
